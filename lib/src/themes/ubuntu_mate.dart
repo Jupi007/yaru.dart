@@ -27,8 +27,8 @@ final _darkColorScheme = ColorScheme.fromSwatch(
   primarySwatch: _primaryColor,
   primaryColorDark: YaruColors.coolGrey,
   accentColor: _primaryColor,
-  cardColor: YaruColors.jet.darken(0.05),
-  backgroundColor: YaruColors.jet.darken(0.05),
+  cardColor: YaruColors.jet.darken(0.02),
+  backgroundColor: YaruColors.jet.darken(0.02),
   errorColor: YaruColors.error,
   brightness: Brightness.dark,
 );
