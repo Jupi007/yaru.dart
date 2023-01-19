@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yaru_colors/yaru_colors.dart';
+import 'package:yaru/src/helpers/color_extension.dart';
 import 'package:yaru/src/themes/common_themes.dart';
 
 const _primaryColor = YaruColors.ubuntuMateGreen;
@@ -26,8 +27,8 @@ final _darkColorScheme = ColorScheme.fromSwatch(
   primarySwatch: _primaryColor,
   primaryColorDark: YaruColors.coolGrey,
   accentColor: _primaryColor,
-  cardColor: YaruColors.jet,
-  backgroundColor: YaruColors.jet,
+  cardColor: YaruColors.jet.darken(0.03),
+  backgroundColor: YaruColors.jet.darken(0.03),
   errorColor: YaruColors.error,
   brightness: Brightness.dark,
 );
