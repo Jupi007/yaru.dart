@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yaru/src/widgets/yaru_calendar.dart';
 import 'package:yaru/src/widgets/yaru_segmented_entry.dart';
 import 'package:yaru/src/yaru_icons.dart';
 
@@ -306,6 +307,9 @@ class YaruDateTimeEntryState extends State<_YaruDateTimeEntry> {
 
   // Used to avoid any controller value change while updating segments
   bool _cancelOnChanged = false;
+
+  final overlayLink = LayerLink();
+  final overlayController = OverlayPortalController();
 
   @override
   void initState() {
@@ -693,8 +697,8 @@ class YaruDateTimeEntryState extends State<_YaruDateTimeEntry> {
     widget.onChanged?.call(dateTime);
   }
 
-  Widget _clearInputButton() {
-    return IconButton(
+  Widget _buildSuffixButtons() {
+    final clearButton = IconButton(
       onPressed: () {
         _cancelOnChanged = true;
         daySegment.value = null;
@@ -709,6 +713,74 @@ class YaruDateTimeEntryState extends State<_YaruDateTimeEntry> {
       },
       icon: const Icon(YaruIcons.edit_clear),
     );
+
+    final calendarOverlayButton = IconButton(
+      onPressed: overlayController.show,
+      icon: const Icon(YaruIcons.calendar_month),
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.type.hasDate) calendarOverlayButton,
+        clearButton,
+      ],
+    );
+  }
+
+  Widget _maybeBuildOverlayPortal({
+    required Widget child,
+  }) {
+    if (!widget.type.hasDate) {
+      return child;
+    }
+
+    return OverlayPortal.targetsRootOverlay(
+      controller: overlayController,
+      overlayChildBuilder: (context) {
+        return CompositedTransformFollower(
+          targetAnchor: Alignment.bottomLeft,
+          offset: const Offset(0, 1),
+          link: overlayLink,
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: TapRegion(
+              onTapOutside: (_) => overlayController.hide(),
+              child: FocusTraversalGroup(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: YaruDayPicker(
+                      firstDate: widget.firstDateTime,
+                      lastDate: widget.lastDateTime,
+                      initialDate: dateTimeController.dateTime,
+                      onDaySelected: (day) {
+                        dateTimeController.dateTime = day.copyWith(
+                          hour: dateTimeController.dateTime?.hour,
+                          minute: dateTimeController.dateTime?.minute,
+                        );
+                        overlayController.hide();
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      child: CompositedTransformTarget(
+        link: overlayLink,
+        child: child,
+      ),
+    );
   }
 
   @override
@@ -718,21 +790,23 @@ class YaruDateTimeEntryState extends State<_YaruDateTimeEntry> {
         ? localizations.timePickerInputHelpText
         : localizations.dateInputLabel;
 
-    return YaruSegmentedEntry(
-      focusNode: widget.focusNode,
-      controller: segmentedEntryController,
-      segments: segments,
-      delimiters: delimiters,
-      validator: _validateDateTime,
-      onChanged: (_) => _onChanged(),
-      onSaved: (_) => widget.onSaved?.call(_tryParseSegments()),
-      onFieldSubmitted: (_) =>
-          widget.onFieldSubmitted?.call(_tryParseSegments()),
-      decoration: InputDecoration(
-        labelText: labelText,
-        suffixIcon: _clearInputButton(),
+    return _maybeBuildOverlayPortal(
+      child: YaruSegmentedEntry(
+        focusNode: widget.focusNode,
+        controller: segmentedEntryController,
+        segments: segments,
+        delimiters: delimiters,
+        validator: _validateDateTime,
+        onChanged: (_) => _onChanged(),
+        onSaved: (_) => widget.onSaved?.call(_tryParseSegments()),
+        onFieldSubmitted: (_) =>
+            widget.onFieldSubmitted?.call(_tryParseSegments()),
+        decoration: InputDecoration(
+          labelText: labelText,
+          suffixIcon: _buildSuffixButtons(),
+        ),
+        keyboardType: TextInputType.datetime,
       ),
-      keyboardType: TextInputType.datetime,
     );
   }
 }
